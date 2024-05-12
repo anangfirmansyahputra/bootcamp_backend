@@ -9,12 +9,20 @@ import { Edit, Trash } from "react-feather";
 export default function CategoryPage() {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
   const router = useRouter();
 
   const fetchData = async () => {
-    const { data } = await axios.get("http://localhost:3000/api/categories");
-    setCategories(data);
+    try {
+      const { data } = await axios.get("/api/categories", {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      });
+
+      setCategories(data);
+    } catch (err) {
+      alert(err.request.response);
+    }
   };
 
   useEffect(() => {
@@ -25,10 +33,14 @@ export default function CategoryPage() {
     setIsLoading(true);
 
     try {
-      await axios.delete(`/api/categories/${id}`);
+      await axios.delete(`/api/categories/${id}`, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      });
       fetchData();
     } catch (err) {
-      alert(err.message);
+      alert(err.request.response);
     } finally {
       setIsLoading(false);
     }
@@ -47,53 +59,60 @@ export default function CategoryPage() {
         </Col>
       </Row>
       <Card>
-        <Card.Header>
-          <Button onClick={() => router.push("/category/add")}>
+        <Card.Header className="bg-white d-flex align-items-center justify-content-between py-4">
+          <h4 className="mb-0">Categories</h4>
+          <Button size="sm" onClick={() => router.push("/category/add")}>
             Add category
           </Button>
         </Card.Header>
-        <Card.Body>
-          <Table className="text-nowrap" responsive>
-            <thead>
-              <tr>
-                <th scope="col">No</th>
-                <th scope="col">Name</th>
-                <th scope="col">Created At</th>
-                <th scope="col">Action</th>
+        <Table className="text-nowrap mb-0" responsive>
+          <thead className="table-light">
+            <tr>
+              <th scope="col">No</th>
+              <th scope="col">Name</th>
+              <th scope="col">Created At</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {categories.map((category, i) => (
+              <tr key={i}>
+                <th scope="row">{i + 1}</th>
+                <td>{category.name}</td>
+                <td>{category.created_at}</td>
+                <td className="d-flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="warning"
+                    className="me-1"
+                    as="button"
+                    disabled={isLoading}
+                    onClick={() => router.push(`/category/${category.id}`)}
+                  >
+                    <Edit size={18} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    className="me-1"
+                    disabled={isLoading}
+                    onClick={() => onDelete(category.id)}
+                  >
+                    <Trash size={18} />
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {categories.map((category, i) => (
-                <tr key={i}>
-                  <th scope="row">{i + 1}</th>
-                  <td>{category.name}</td>
-                  <td>{category.created_at}</td>
-                  <td className="d-flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="warning"
-                      className="me-1"
-                      as="button"
-                      disabled={isLoading}
-                      onClick={() => router.push(`/category/${category.id}`)}
-                    >
-                      <Edit size={18} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      className="me-1"
-                      disabled={isLoading}
-                      onClick={() => onDelete(category.id)}
-                    >
-                      <Trash size={18} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card.Body>
+            ))}
+            {categories.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center">
+                  No categories found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+        <Card.Footer className="bg-white text-center py-3" />
       </Card>
     </Container>
   );

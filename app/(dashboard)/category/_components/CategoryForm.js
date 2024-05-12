@@ -1,16 +1,10 @@
-// import node module libraries
-import { Col, Row, Form, Card, Button, Image } from "react-bootstrap";
-
-// import widget as custom components
-import { FormSelect, DropFiles } from "widgets";
-
-// import hooks
-import useMounted from "hooks/useMounted";
-import { useEffect, useState } from "react";
+import { Button, Card, Col, Form, Row } from "react-bootstrap";
 import axios from "axios";
+import useMounted from "hooks/useMounted";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const CategoryForm = ({ id }) => {
+const CategoryForm = ({ data }) => {
   const hasMounted = useMounted();
   const [name, setName] = useState("");
   const router = useRouter();
@@ -19,14 +13,30 @@ const CategoryForm = ({ id }) => {
     try {
       e.preventDefault();
 
-      if (id) {
-        const { data } = await axios.patch(`/api/categories/${id}`, {
-          name,
-        });
+      if (data) {
+        const res = await axios.patch(
+          `/api/categories/${data.id}`,
+          {
+            name,
+          },
+          {
+            headers: {
+              Authorization: localStorage.getItem("token"),
+            },
+          }
+        );
       } else {
-        const { data } = await axios.post("/api/categories", {
-          name,
-        });
+        const res = await axios.post(
+          "/api/categories",
+          {
+            name,
+          },
+          {
+            headers: {
+              Authorization: localStorage.getItem("token"),
+            },
+          }
+        );
       }
 
       router.push("/category");
@@ -38,7 +48,11 @@ const CategoryForm = ({ id }) => {
 
   const fetchData = async () => {
     try {
-      const { data } = await axios.get(`/api/categories/${id}`);
+      const { data } = await axios.get(`/api/categories/${id}`, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      });
       setName(data.name);
     } catch (e) {
       router.push("/category");
@@ -46,10 +60,12 @@ const CategoryForm = ({ id }) => {
   };
 
   useEffect(() => {
-    if (id) {
+    if (data) {
+      setName(data.name);
+    } else {
       fetchData();
     }
-  }, [id]);
+  }, [data]);
 
   return (
     <Row className="mb-8">

@@ -1,115 +1,156 @@
 // import node module libraries
 import {
-  Col,
-  Row,
-  Form,
-  Card,
   Button,
-  Image,
   ButtonGroup,
+  Card,
   CloseButton,
+  Col,
+  Form,
+  Row,
 } from "react-bootstrap";
-
-// import widget as custom components
-import { FormSelect, DropFiles } from "widgets";
-
-// import hooks
-import useMounted from "hooks/useMounted";
-import { useEffect, useState } from "react";
 import axios from "axios";
+import useMounted from "hooks/useMounted";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const ProductForm = ({ data }) => {
+export default function ProductForm({ data }) {
   const hasMounted = useMounted();
+  const router = useRouter();
   const [categories, setCategories] = useState([]);
-  const [colors, setColors] = useState(["#000000"]);
-  const [images, setImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [form, setForm] = useState({
     title: "",
     price: "0",
     description: "",
-    category_id: categories[0]?.id || "",
+    category_id: "",
     company: "",
     stock: "",
     shipping: true,
     featured: true,
+    colors: ["#000"],
+    images: [],
   });
 
   const fetchData = async () => {
-    const response = await axios.get("/api/categories");
-    const categories = response.data.map((category) => ({
-      label: category.name,
-      value: category.id,
-    }));
-    setCategories(categories);
+    const { data } = await axios.get("/api/categories", {
+      headers: {
+        Authorization: localStorage.getItem("token"),
+      },
+    });
+    setCategories(data);
   };
 
   useEffect(() => {
     fetchData();
     if (data) {
-      setForm(data);
-      setColors(data.colors || ["#000000"]);
-      setPreviewImages(data?.images?.map((image) => image.url) || []);
+      setForm({
+        ...data,
+      });
     }
   }, [data]);
 
-  console.log(previewImages);
-
   const onChangeColor = (e, i) => {
-    const newColors = [...colors];
+    const newColors = [...form.colors];
     newColors[i] = e.target.value;
-    setColors(newColors);
+    setForm({
+      ...form,
+      colors: newColors,
+    });
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
+    setIsLoading(true);
     const files = Array.from(e.target.files);
 
-    // Menambahkan file ke state images
-    setImages([...images, ...files]);
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
 
-    // Membuat preview gambar
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setPreviewImages([...previewImages, ...previews]);
+    try {
+      const { data } = await axios.post("/api/images", formData, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setForm({
+        ...form,
+        images: [...form.images, ...data.images],
+      });
+    } catch (error) {
+      alert(error.message);
+      console.error("Error uploading images:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageRemove = async (filename, index) => {
+    setIsLoading(true);
+
+    try {
+      await axios.delete(`/api/images/${filename}`);
+
+      const updatedPreviews = [...form.images];
+      updatedPreviews.splice(index, 1);
+      setForm({
+        ...form,
+        images: updatedPreviews,
+      });
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("title", form.title);
-    formData.append("price", form.price);
-    formData.append("description", form.description);
-    formData.append("category_id", form.category_id);
-    formData.append("company", form.company);
-    formData.append("stock", form.stock);
-    formData.append("shipping", form.shipping);
-    formData.append("featured", form.featured);
-    formData.append("colors", colors);
+    if (form.images.length === 0) {
+      alert("Please select images");
+      return;
+    }
 
-    images.forEach((image, index) => {
-      formData.append(`files`, image);
-    });
+    setIsLoading(true);
 
     try {
-      const response = await axios.post("/api/products", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: localStorage.getItem("token"),
-        },
-      });
+      if (data) {
+        const response = await axios.patch(
+          `/api/products/${data.id}`,
+          {
+            ...form,
+          },
+          {
+            headers: {
+              Authorization: localStorage.getItem("token"),
+            },
+          }
+        );
+      } else {
+        const response = await axios.post(
+          "/api/products",
+          {
+            ...form,
+          },
+          {
+            headers: {
+              Authorization: localStorage.getItem("token"),
+            },
+          }
+        );
+      }
+
+      router.push("/product");
     } catch (error) {
       console.error("Error uploading images:", error);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleImageRemove = (index) => {
-    const updatedImages = [...images];
-    updatedImages.splice(index, 1);
-    setImages(updatedImages);
-
-    const updatedPreviews = [...previewImages];
-    updatedPreviews.splice(index, 1);
-    setPreviewImages(updatedPreviews);
   };
 
   const handleOnChange = (e) => {
@@ -149,6 +190,7 @@ const ProductForm = ({ data }) => {
                     </Form.Label>
                     <Col md={8} xs={12}>
                       <Form.Control
+                        disabled={isLoading}
                         type="text"
                         placeholder="Title"
                         id="title"
@@ -170,6 +212,7 @@ const ProductForm = ({ data }) => {
                     </Form.Label>
                     <Col md={8} xs={12}>
                       <Form.Control
+                        disabled={isLoading}
                         type="number"
                         placeholder="Price"
                         id="price"
@@ -188,6 +231,7 @@ const ProductForm = ({ data }) => {
                     </Form.Label>
                     <Col md={8} xs={12}>
                       <Form.Control
+                        disabled={isLoading}
                         as="textarea"
                         placeholder="Description"
                         id="description"
@@ -206,14 +250,21 @@ const ProductForm = ({ data }) => {
                     </Form.Label>
                     <Col md={8} xs={12}>
                       <Form.Control
-                        as={FormSelect}
+                        disabled={isLoading}
+                        as={"select"}
                         placeholder="Select category"
                         id="category_id"
                         name="category_id"
-                        options={categories}
                         value={form.category_id}
                         onChange={handleOnChange}
-                      />
+                      >
+                        <option>Select category</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </Form.Control>
                     </Col>
                   </Row>
 
@@ -224,6 +275,7 @@ const ProductForm = ({ data }) => {
                     </Form.Label>
                     <Col md={8} xs={12}>
                       <Form.Control
+                        disabled={isLoading}
                         type="text"
                         placeholder="Company Name"
                         id="company"
@@ -242,6 +294,7 @@ const ProductForm = ({ data }) => {
                     </Form.Label>
                     <Col md={8} xs={12}>
                       <Form.Control
+                        disabled={isLoading}
                         type="number"
                         placeholder="Stock"
                         id="stock"
@@ -253,16 +306,71 @@ const ProductForm = ({ data }) => {
                     </Col>
                   </Row>
 
+                  {/* Featured */}
+                  <Row className="mb-3">
+                    <Form.Label className="col-sm-4" htmlFor="stock">
+                      Featured
+                    </Form.Label>
+                    <Col md={8} xs={12}>
+                      <ButtonGroup>
+                        <Button
+                          size="sm"
+                          disabled={isLoading}
+                          variant={form.featured ? "success" : "secondary"}
+                          onClick={() => setForm({ ...form, featured: true })}
+                        >
+                          Yes
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={isLoading}
+                          variant={!form.featured ? "success" : "secondary"}
+                          onClick={() => setForm({ ...form, featured: false })}
+                        >
+                          No
+                        </Button>
+                      </ButtonGroup>
+                    </Col>
+                  </Row>
+
+                  {/* Featured */}
+                  <Row className="mb-3">
+                    <Form.Label className="col-sm-4" htmlFor="stock">
+                      Shipping
+                    </Form.Label>
+                    <Col md={8} xs={12}>
+                      <ButtonGroup>
+                        <Button
+                          size="sm"
+                          disabled={isLoading}
+                          variant={form.shipping ? "success" : "secondary"}
+                          onClick={() => setForm({ ...form, shipping: true })}
+                        >
+                          Yes
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={isLoading}
+                          variant={!form.shipping ? "success" : "secondary"}
+                          onClick={() => setForm({ ...form, shipping: false })}
+                        >
+                          No
+                        </Button>
+                      </ButtonGroup>
+                    </Col>
+                  </Row>
+
                   {/* Color */}
                   <Row className="mb-3">
                     <Form.Label className="col-sm-4">Color</Form.Label>
                     <Col sm={8} className="d-flex flex-wrap gap-1">
-                      {colors.map((color, i) => (
+                      {form?.colors?.map((color, i) => (
                         <Form.Control
+                          disabled={isLoading}
                           type="color"
                           id="color1"
                           required
-                          value={colors[i]}
+                          value={form?.colors[i]}
                           onChange={(e) => onChangeColor(e, i)}
                           // className="me-2" // Margin-right 2
                           key={i}
@@ -270,19 +378,33 @@ const ProductForm = ({ data }) => {
                       ))}
                       <ButtonGroup>
                         <Button
+                          disabled={isLoading}
                           size="sm"
                           variant={"success"}
-                          onClick={() => setColors([...colors, "#000000"])}
+                          onClick={() => {
+                            setForm({
+                              ...form,
+                              colors: [...form.colors, "#000000"],
+                            });
+                          }}
                         >
                           {/* <i className="nav-icon fe fe-plus"></i> */}
                           Add
                         </Button>
                         <Button
+                          disabled={isLoading}
                           size="sm"
                           variant={"danger"}
                           onClick={() => {
-                            if (colors.length !== 1) {
-                              setColors(colors.slice(0, colors.length - 1));
+                            if (form.colors.length !== 1) {
+                              setForm({
+                                ...form,
+                                colors: [...form.colors].slice(
+                                  0,
+                                  form.colors.length - 1
+                                ),
+                              });
+                              // setColors(colors.slice(0, colors.length - 1));
                             }
                           }}
                         >
@@ -298,6 +420,7 @@ const ProductForm = ({ data }) => {
                     <Form.Label className="col-sm-4">Images</Form.Label>
                     <Col md={8} xs={12}>
                       <Form.Control
+                        disabled={isLoading}
                         type="file"
                         multiple
                         onChange={handleImageChange}
@@ -308,13 +431,16 @@ const ProductForm = ({ data }) => {
                     <Form.Label className="col-sm-4"></Form.Label>
                     <Col xs={12} md={8}>
                       <Row>
-                        {previewImages.map((preview, index) => (
+                        {form?.images?.map((image, index) => (
                           <Col key={index} md={3} sm={12}>
                             <Card style={{ width: "100%" }}>
-                              <Card.Img variant="top" src={preview} />
+                              <Card.Img
+                                variant="top"
+                                src={"/uploads/" + image}
+                              />
                               <CloseButton
                                 className="position-absolute top-0 end-0"
-                                onClick={() => handleImageRemove(index)}
+                                onClick={() => handleImageRemove(image, index)}
                               />
                             </Card>
                           </Col>
@@ -326,7 +452,11 @@ const ProductForm = ({ data }) => {
                   <Row className="mb-3">
                     <Form.Label className="col-sm-4"></Form.Label>
                     <Col md={8} xs={12}>
-                      <Button variant="primary" type="submit">
+                      <Button
+                        disabled={isLoading}
+                        variant="primary"
+                        type="submit"
+                      >
                         Save Changes
                       </Button>
                     </Col>
@@ -339,6 +469,4 @@ const ProductForm = ({ data }) => {
       </Col>
     </Row>
   );
-};
-
-export default ProductForm;
+}

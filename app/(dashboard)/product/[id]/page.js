@@ -27,8 +27,6 @@ const ProductAddPage = ({ params }) => {
     }
   };
 
-  console.log(data);
-
   useEffect(() => {
     fetchData();
   }, []);

@@ -25,7 +25,8 @@ model User {
   updated_at DateTime @updatedAt
 
   products Product[]
-  Review   Review[]
+  reviews  Review[]
+  orders   Order[]
 
   @@map("users")
 }
@@ -42,30 +43,17 @@ model Product {
   shipping    Boolean @default(false)
   featured    Boolean @default(false)
   colors      Json
+  images      Json
 
   category Category @relation(fields: [category_id], references: [id])
   user     User     @relation(fields: [user_id], references: [id])
 
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
-  images      Image[]
   reviews     Review[]
   order_items OrderItems[]
 
   @@map("products")
-}
-
-model Image {
-  id         String @id @default(uuid())
-  product_id String
-  url        String
-
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@map("images")
 }
 
 model Category {
@@ -96,7 +84,7 @@ model Review {
 
 model Order {
   id             String @id @default(uuid())
-  use_id         String
+  user_id        String
   address        String
   postal_code    String
   payment_method String
@@ -106,6 +94,8 @@ model Order {
   updated_at  DateTime     @updatedAt
   order_items OrderItems[]
 
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@map("orders")
 }
 
@@ -114,9 +104,10 @@ model OrderItems {
   product_id String
   order_id   String
   quantity   Int
+  color      String
 
-  product Product @relation(fields: [product_id], references: [id])
-  order   Order   @relation(fields: [order_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

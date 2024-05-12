@@ -1,11 +1,20 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { compareSync, hashSync } from "bcrypt";
+import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { db } from "lib/db";
 import { NextResponse } from "next/server";
 
 // Update user by id
 export async function PATCH(req, { params }) {
   try {
+    const token = req.headers.get("authorization");
+
+    if (!token) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_KEY);
+
     const user = await db.user.findFirst({
       where: {
         id: params.id,
@@ -36,6 +45,8 @@ export async function PATCH(req, { params }) {
   } catch (err) {
     if (err instanceof PrismaClientValidationError) {
       return new NextResponse("User validation error", { status: 400 });
+    } else if (err instanceof JsonWebTokenError) {
+      return new NextResponse("Unauthorized", { status: 401 });
     } else {
       return new NextResponse("Internal Server Error", { status: 500 });
     }
@@ -45,6 +56,14 @@ export async function PATCH(req, { params }) {
 // Delete user by id
 export async function DELETE(req, { params }) {
   try {
+    const token = req.headers.get("authorization");
+
+    if (!token) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_KEY);
+
     const user = await db.user.findFirst({
       where: {
         id: params.id,
@@ -63,14 +82,25 @@ export async function DELETE(req, { params }) {
 
     return new NextResponse("User deleted", { status: 204 });
   } catch (err) {
-    console.log(err);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    if (err instanceof JsonWebTokenError) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    } else {
+      return new NextResponse("Internal Server Error", { status: 500 });
+    }
   }
 }
 
 // Find user by id
 export async function GET(req, { params }) {
   try {
+    const token = req.headers.get("authorization");
+
+    if (!token) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_KEY);
+
     const user = await db.user.findFirst({
       where: {
         id: params.id,
@@ -85,6 +115,10 @@ export async function GET(req, { params }) {
 
     return new NextResponse(user);
   } catch (err) {
-    return new NextResponse("Internal Server Error", { status: 500 });
+    if (err instanceof JsonWebTokenError) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    } else {
+      return new NextResponse("Internal Server Error", { status: 500 });
+    }
   }
 }

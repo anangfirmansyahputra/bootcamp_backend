@@ -1,14 +1,9 @@
 "use client";
-// import node module libraries
 import { Container } from "react-bootstrap";
-
-// import widget as custom components
 import { PageHeading } from "widgets";
 import ProductForm from "../_components/ProductForm";
 
-// import sub components
-
-const ProductAddPage = ({ params }) => {
+export default function ProductAddPage() {
   return (
     <Container fluid className="p-6">
       {/* Page Heading */}
@@ -18,6 +13,4 @@ const ProductAddPage = ({ params }) => {
       <ProductForm />
     </Container>
   );
-};
-
-export default ProductAddPage;
+}

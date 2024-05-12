@@ -16,7 +16,6 @@ export async function GET(req) {
 
     const products = await db.product.findMany({
       include: {
-        images: true,
         category: true,
       },
     });
@@ -43,17 +42,18 @@ export async function POST(req) {
 
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_KEY);
 
-    const data = await req.formData();
-    const title = data.get("title");
-    const price = data.get("price");
-    const description = data.get("description");
-    const category_id = data.get("category_id");
-    const company = data.get("company");
-    const shipping = JSON.parse(data.get("shipping"));
-    const featured = JSON.parse(data.get("featured"));
-    const stock = data.get("stock");
-    const colors = data.get("colors");
-    const files = data.getAll("files");
+    const {
+      title,
+      price,
+      description,
+      category_id,
+      company,
+      shipping,
+      featured,
+      stock,
+      colors,
+      images,
+    } = await req.json();
 
     const category = await db.category.findFirst({
       where: {
@@ -77,28 +77,9 @@ export async function POST(req) {
         shipping,
         featured,
         stock: Number(stock),
-        colors: colors.split(","),
+        colors,
+        images,
       },
-    });
-
-    let images = [];
-
-    for (const file of files) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const filename = Date.now() + file.name.replaceAll(" ", "_");
-      await writeFile(
-        path.join(process.cwd(), "public/uploads/" + filename),
-        buffer
-      );
-
-      images.push(filename);
-    }
-
-    await db.image.createMany({
-      data: images.map((image) => ({
-        product_id: products.id,
-        url: `/uploads/${image}`,
-      })),
     });
 
     return NextResponse.json(products);

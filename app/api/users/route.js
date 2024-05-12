@@ -1,11 +1,19 @@
 import { db } from "lib/db";
 import { NextResponse } from "next/server";
 import { hashSync } from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export async function GET(req, res) {
   try {
+    const token = req.headers.get("authorization");
+
+    if (!token) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_KEY);
+
     const users = await db.user.findMany({});
     const deletePasswordUsers = users.map((user) => {
       delete user.password;
@@ -14,7 +22,12 @@ export async function GET(req, res) {
 
     return NextResponse.json(deletePasswordUsers);
   } catch (err) {
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.log(err);
+    if (err instanceof JsonWebTokenError) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    } else {
+      return new NextResponse("Internal Server Error", { status: 500 });
+    }
   }
 }
 
@@ -30,8 +43,6 @@ export async function POST(req) {
       },
     });
 
-    console.log(decoded);
-
     if (!user) {
       return new NextResponse("Unauthorized", { status: 401 });
     } else {
@@ -39,6 +50,10 @@ export async function POST(req) {
     }
   } catch (err) {
     console.log(err);
-    return new NextResponse("Unauthorized", { status: 401 });
+    if (err instanceof JsonWebTokenError) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    } else {
+      return new NextResponse("Internal Server Error", { status: 500 });
+    }
   }
 }
