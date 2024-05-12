@@ -66,7 +66,7 @@ const NavbarVertical = (props) => {
     return (
       <Link
         href={item.link}
-        className={`nav-link ${location.includes(item.link) ? "active" : ""}`}
+        className={`nav-link ${location === item.link ? "active" : ""}`}
         onClick={(e) =>
           isMobile ? props.onClick(!props.showMenu) : props.showMenu
         }
@@ -300,9 +300,10 @@ const NavbarVertical = (props) => {
                     <Link
                       href={menu.link}
                       className={`nav-link ${
-                        location.includes(menu.link) ? "active" : ""
-                      } ${
-                        menu.title === "Download" ? "bg-primary text-white" : ""
+                        location === menu.link ||
+                        (menu.link === "/" && location === "/dashboard")
+                          ? "bg-primary text-white"
+                          : ""
                       }`}
                     >
                       {typeof menu.icon === "string" ? (

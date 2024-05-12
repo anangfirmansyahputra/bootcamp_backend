@@ -1,11 +1,9 @@
 // import node module libraries
-import Link from "next/link";
-import { ProgressBar, Col, Row, Card, Table, Image } from "react-bootstrap";
+import { Card, Col, Row, Table } from "react-bootstrap";
 
 // import required data files
-import ActiveProjectsData from "data/dashboard/ActiveProjectsData";
-import { useEffect, useState } from "react";
 import axios from "axios";
+import { useEffect, useState } from "react";
 
 const ActiveProjects = () => {
   const [data, setData] = useState([]);

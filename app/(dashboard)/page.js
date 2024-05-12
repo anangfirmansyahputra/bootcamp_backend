@@ -7,7 +7,7 @@ import { Col, Container, Row } from "react-bootstrap";
 import { StatRightTopIcon } from "widgets";
 
 // import sub components
-import { ActiveProjects, TasksPerformance, Teams } from "sub-components";
+import { ActiveProjects } from "sub-components";
 
 // import required data files
 import axios from "axios";

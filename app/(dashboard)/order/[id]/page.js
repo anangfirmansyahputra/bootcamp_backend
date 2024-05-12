@@ -3,8 +3,7 @@
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button, Card, Col, Container, Row, Table } from "react-bootstrap";
-import { Eye } from "react-feather";
+import { Card, Col, Container, Row, Table } from "react-bootstrap";
 
 export default function OrderDetailPage({ params }) {
   const [data, setData] = useState([]);
