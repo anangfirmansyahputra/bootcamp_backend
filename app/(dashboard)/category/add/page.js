@@ -12,7 +12,7 @@ const AddPage = () => {
   return (
     <Container fluid className="p-6">
       {/* Page Heading */}
-      <PageHeading heading="Product" />
+      <PageHeading heading="Category" />
 
       {/* Product Form */}
       <CategoryForm />

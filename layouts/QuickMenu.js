@@ -11,13 +11,20 @@ import "simplebar/dist/simplebar.min.css";
 
 // import hooks
 import useMounted from "hooks/useMounted";
+import { useRouter } from "next/navigation";
 
-const QuickMenu = () => {
+const QuickMenu = (props) => {
   const hasMounted = useMounted();
+  const router = useRouter();
 
   const isDesktop = useMediaQuery({
     query: "(min-width: 1224px)",
   });
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    router.push("/authentication/sign-in");
+  }
 
   const QuickMenuDesktop = () => {
     return (
@@ -49,11 +56,11 @@ const QuickMenu = () => {
           >
             <Dropdown.Item as="div" className="px-4 pb-0 pt-2" bsPrefix=" ">
               <div className="lh-1 ">
-                <h5 className="mb-1"> John E. Grainger</h5>
+                <h5 className="mb-1"> {props.profile.name}</h5>
               </div>
               <div className=" dropdown-divider mt-3 mb-2"></div>
             </Dropdown.Item>
-            <Dropdown.Item>
+            <Dropdown.Item onClick={handleLogout}>
               <i className="fe fe-power me-2"></i>Sign Out
             </Dropdown.Item>
           </Dropdown.Menu>

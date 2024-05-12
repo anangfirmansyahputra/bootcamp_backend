@@ -4,7 +4,7 @@ import useMounted from "hooks/useMounted";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const CategoryForm = ({ data }) => {
+export default function CategoryForm({ data }) {
   const hasMounted = useMounted();
   const [name, setName] = useState("");
   const router = useRouter();
@@ -48,7 +48,7 @@ const CategoryForm = ({ data }) => {
 
   const fetchData = async () => {
     try {
-      const { data } = await axios.get(`/api/categories/${id}`, {
+      const { data } = await axios.get(`/api/categories`, {
         headers: {
           Authorization: localStorage.getItem("token"),
         },
@@ -71,10 +71,8 @@ const CategoryForm = ({ data }) => {
     <Row className="mb-8">
       <Col xl={3} lg={4} md={12} xs={12}>
         <div className="mb-4 mb-lg-0">
-          <h4 className="mb-1">General Setting</h4>
-          <p className="mb-0 fs-5 text-muted">
-            Profile configuration settings{" "}
-          </p>
+          <h4 className="mb-1">Category Form</h4>
+          <p className="mb-0 fs-5 text-muted">Form create a new category</p>
         </div>
       </Col>
       <Col xl={9} lg={8} md={12} xs={12}>
@@ -85,9 +83,6 @@ const CategoryForm = ({ data }) => {
               <h4 className="mb-1">Category Form</h4>
             </div>
             <div>
-              <div className="mb-6">
-                <h4 className="mb-1">Basic information</h4>
-              </div>
               {hasMounted && (
                 <Form onSubmit={onSubmit}>
                   {/* Location */}
@@ -121,6 +116,4 @@ const CategoryForm = ({ data }) => {
       </Col>
     </Row>
   );
-};
-
-export default CategoryForm;
+}

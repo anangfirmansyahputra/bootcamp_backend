@@ -300,7 +300,7 @@ const NavbarVertical = (props) => {
                     <Link
                       href={menu.link}
                       className={`nav-link ${
-                        location === menu.link ? "active" : ""
+                        location.includes(menu.link) ? "active" : ""
                       } ${
                         menu.title === "Download" ? "bg-primary text-white" : ""
                       }`}

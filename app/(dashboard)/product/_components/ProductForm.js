@@ -166,7 +166,7 @@ export default function ProductForm({ data }) {
       <Col xl={3} lg={4} md={12} xs={12}>
         <div className="mb-4 mb-lg-0">
           <h4 className="mb-1">Product Form</h4>
-          <p className="mb-0 fs-5 text-muted">Add product form</p>
+          <p className="mb-0 fs-5 text-muted">Form create a new product</p>
         </div>
       </Col>
       <Col xl={9} lg={8} md={12} xs={12}>

@@ -12,7 +12,10 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 
 export default function DashboardLayout({ children }) {
+  const [token, setToken] = useState("");
   const [showMenu, setShowMenu] = useState(true);
+  const [profile, setProfile] = useState({});
+
   const router = useRouter();
   const ToggleMenu = () => {
     return setShowMenu(!showMenu);
@@ -20,9 +23,12 @@ export default function DashboardLayout({ children }) {
 
   const verifyToken = async (token) => {
     try {
-      const res = await axios.post("/api/users", {
+      const { data } = await axios.post("/api/users", {
         token,
       });
+
+      setToken(token);
+      setProfile(data);
     } catch (err) {
       localStorage.removeItem("token");
       return router.push("/authentication/sign-in");
@@ -34,10 +40,14 @@ export default function DashboardLayout({ children }) {
 
     if (!token) {
       return router.push("/authentication/sign-in");
+    } else {
+      verifyToken(token);
     }
-
-    verifyToken(token);
   }, []);
+
+  if (!token) {
+    return null;
+  }
 
   return (
     <div id="db-wrapper" className={`${showMenu ? "" : "toggled"}`}>
@@ -53,6 +63,7 @@ export default function DashboardLayout({ children }) {
             data={{
               showMenu: showMenu,
               SidebarToggleMenu: ToggleMenu,
+              profile,
             }}
           />
         </div>
