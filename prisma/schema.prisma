@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String   @db.Text
+  access_token String?  @db.Text
+  role         UserRole
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  products Product[]
+  Review   Review[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  title       String
+  price       Int
+  description String?
+  category_id String
+  user_id     String
+  company     String
+  stock       Int
+  shipping    Boolean @default(false)
+  featured    Boolean @default(false)
+  colors      Json
+
+  category Category @relation(fields: [category_id], references: [id])
+  user     User     @relation(fields: [user_id], references: [id])
+
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  images      Image[]
+  reviews     Review[]
+  order_items OrderItems[]
+
+  @@map("products")
+}
+
+model Image {
+  id         String @id @default(uuid())
+  product_id String
+  url        String
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("images")
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  products   Product[]
+}
+
+model Review {
+  id         String @id @default(uuid())
+  product_id String
+  user_id    String
+
+  text String @db.Text
+  star Int
+
+  product Product @relation(fields: [product_id], references: [id])
+  user    User    @relation(fields: [user_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+model Order {
+  id             String @id @default(uuid())
+  use_id         String
+  address        String
+  postal_code    String
+  payment_method String
+  country        String
+
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  order_items OrderItems[]
+
+  @@map("orders")
+}
+
+model OrderItems {
+  id         String @id @default(uuid())
+  product_id String
+  order_id   String
+  quantity   Int
+
+  product Product @relation(fields: [product_id], references: [id])
+  order   Order   @relation(fields: [order_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("order_items")
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
