@@ -31,4 +31,5 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Ignore all files inside /public/uploads
 /public/uploads/*
